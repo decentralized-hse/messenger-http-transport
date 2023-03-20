@@ -8,4 +8,4 @@
  */
 
 rootProject.name = "messenger-http-transport"
-include("app")
+include("lib")

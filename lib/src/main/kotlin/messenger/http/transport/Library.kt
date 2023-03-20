@@ -3,6 +3,8 @@
  */
 package messenger.http.transport
 
-fun main() {
-    println("Hello, world!")
+class Library {
+    fun someLibraryMethod(): Boolean {
+        return true
+    }
 }
