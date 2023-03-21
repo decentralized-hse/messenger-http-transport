@@ -25,12 +25,42 @@ class CaptchaTest {
                         "application/json")
         )
     }
+//    private val mockEngine = MockEngine { request ->
+//        when (request.url.pathSegments.joinToString("/")) {
+//            "api/captcha/2chcaptcha/id" -> respond(
+//                    content = ByteRe adChannel(
+//                            """{"id":"$CAPTCHA_ID","input":"numeric","result":1,"type":"$CAPTCHA_TYPE"}"""
+//                    ),
+//                    status = HttpStatusCode.OK,
+//                    headers = headersOf(
+//                            HttpHeaders.ContentType,
+//                            "application/json")
+//            )
+//            "api/captcha/2chcaptcha/show" -> {
+//                val par = request.url.parameters
+//                if (par.contains("id") and par.get("id") == CAPTCHA_ID) {
+//                    return respond(
+//                            content = ByteReadChannel(
+//                                    """{"id":"$CAPTCHA_ID","input":"numeric","result":1,"type":"$CAPTCHA_TYPE"}"""
+//                            ),
+//                            status = HttpStatusCode.OK,
+//                            headers = headersOf(
+//                                    HttpHeaders.ContentType,
+//                                    "application/json")
+//                }
+//            }
+//        }
+//    }
 
     @Test
     fun getCaptchaTest() {
         runBlocking {
             val captchaHelper = CaptchaHelper(mockEngine)
             assertEquals(Captcha(CAPTCHA_TYPE, CAPTCHA_ID), captchaHelper.getCaptcha())
+            captchaHelper.close()
         }
     }
+
+//    @Test
+//    fun getImageTest()
 }
