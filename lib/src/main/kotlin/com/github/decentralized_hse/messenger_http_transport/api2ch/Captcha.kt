@@ -20,12 +20,12 @@ data class Captcha(val type: String, val id: String) {
 
     fun url(): Url {
         return Url(URLBuilder(
-                protocol = Settings.CHAN_PROTOCOL,
-                host = Settings.CHAN_HOST,
-                pathSegments = listOf("api", "captcha", type, "show"),
-                parameters = Parameters.build {
-                    append("id", id)
-                }
+            protocol = Settings.CHAN_PROTOCOL,
+            host = Settings.CHAN_HOST,
+            pathSegments = listOf("api", "captcha", type, "show"),
+            parameters = Parameters.build {
+                append("id", id)
+            }
         ))
     }
 }
@@ -57,6 +57,7 @@ class CaptchaHelper(engine: HttpClientEngine = CIO.create()) {
 
         return Captcha(chanCaptcha.type, chanCaptcha.id)
     }
+
     suspend fun getImage(captcha: Captcha): File {
         val url = captcha.url()
         val file = File(url.toString())

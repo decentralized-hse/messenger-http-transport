@@ -14,43 +14,67 @@ class CaptchaTest {
         const val CAPTCHA_TYPE = "2chcaptcha"
     }
 
-    private val mockEngine = MockEngine { _ ->
-        respond(
+    //    private val mockEngine = MockEngine { _ ->
+//        respond(
+//                content = ByteReadChannel(
+//                        """{"id":"$CAPTCHA_ID","input":"numeric","result":1,"type":"$CAPTCHA_TYPE"}"""
+//                ),
+//                status = HttpStatusCode.OK,
+//                headers = headersOf(
+//                        HttpHeaders.ContentType,
+//                        "application/json")
+//        )
+//    }
+    private val mockEngine = MockEngine { request ->
+        when (val path = request.url.pathSegments.joinToString("/")) {
+            "api/captcha/2chcaptcha/id" -> respond(
                 content = ByteReadChannel(
-                        """{"id":"$CAPTCHA_ID","input":"numeric","result":1,"type":"$CAPTCHA_TYPE"}"""
+                    """{"id":"$CAPTCHA_ID","input":"numeric","result":1,"type":"$CAPTCHA_TYPE"}"""
                 ),
                 status = HttpStatusCode.OK,
                 headers = headersOf(
+                    HttpHeaders.ContentType,
+                    "application/json"
+                )
+            )
+
+            "/api/captcha/2chcaptcha/show" -> {
+                val par = request.url.parameters
+                if (par.contains("id") && par["id"] == CAPTCHA_ID) {
+                    respond(
+                        content = ByteReadChannel(
+                            "<image>"
+                        ),
+                        status = HttpStatusCode.OK,
+                        headers = headersOf(
+                            HttpHeaders.ContentType,
+                            "image/png"
+                        )
+                    )
+                } else {
+                    respond(
+                        """{"status": "404", "message_error": "404"}""",
+                        status = HttpStatusCode.NotFound,
+                        headers = headersOf(
+                            HttpHeaders.ContentType,
+                            "application/json"
+                        )
+                    )
+                }
+            }
+
+            else -> {
+                respond(
+                    """{"status": "400", "message_error": "$path"}""",
+                    status = HttpStatusCode.BadRequest,
+                    headers = headersOf(
                         HttpHeaders.ContentType,
-                        "application/json")
-        )
+                        "application/json"
+                    )
+                )
+            }
+        }
     }
-//    private val mockEngine = MockEngine { request ->
-//        when (request.url.pathSegments.joinToString("/")) {
-//            "api/captcha/2chcaptcha/id" -> respond(
-//                    content = ByteRe adChannel(
-//                            """{"id":"$CAPTCHA_ID","input":"numeric","result":1,"type":"$CAPTCHA_TYPE"}"""
-//                    ),
-//                    status = HttpStatusCode.OK,
-//                    headers = headersOf(
-//                            HttpHeaders.ContentType,
-//                            "application/json")
-//            )
-//            "api/captcha/2chcaptcha/show" -> {
-//                val par = request.url.parameters
-//                if (par.contains("id") and par.get("id") == CAPTCHA_ID) {
-//                    return respond(
-//                            content = ByteReadChannel(
-//                                    """{"id":"$CAPTCHA_ID","input":"numeric","result":1,"type":"$CAPTCHA_TYPE"}"""
-//                            ),
-//                            status = HttpStatusCode.OK,
-//                            headers = headersOf(
-//                                    HttpHeaders.ContentType,
-//                                    "application/json")
-//                }
-//            }
-//        }
-//    }
 
     @Test
     fun getCaptchaTest() {
@@ -61,6 +85,16 @@ class CaptchaTest {
         }
     }
 
-//    @Test
-//    fun getImageTest()
+    @Test
+    fun getImageTest() {
+        runBlocking {
+            val captchaHelper = CaptchaHelper(mockEngine)
+            val captcha = captchaHelper.getCaptcha()
+            assertEquals(captcha.url().toString(), "https://2ch.hk/api/captcha/$CAPTCHA_TYPE/show?id=$CAPTCHA_ID")
+            assertEquals(Captcha(CAPTCHA_TYPE, CAPTCHA_ID), captcha)
+            assertEquals(captchaHelper.getImage(captcha).readText(), "<image>")
+            captchaHelper.close()
+        }
+    }
 }
+
