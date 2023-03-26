@@ -12,7 +12,7 @@ import kotlinx.serialization.decodeFromString
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
 import org.simpleframework.xml.Element
-import org.simpleframework.xml.Root
+import org.simpleframework.xml.ElementList
 import org.simpleframework.xml.Serializer
 import org.simpleframework.xml.core.Persister
 
@@ -91,66 +91,8 @@ class Sendbin(
         }.body()
     }
 
-    @Root(strict = false, name = "Paste")
-    private class Paste {
-        @field:Element(name = "paste_key", required = false)
-        var pasteKey: String? = null
-
-        @field:Element(name = "paste_date", required = false)
-        var pasteDate: String? = null
-
-        @field:Element(name = "paste_title", required = false)
-        var pasteTitle: String? = null
-
-        @field:Element(name = "paste_size", required = false)
-        var pasteSize: String? = null
-
-        @field:Element(name = "paste_expire_date", required = false)
-        var pasteExpireDate: String? = null
-
-        @field:Element(name = "paste_private", required = false)
-        var pastePrivate: String? = null
-
-        @field:Element(name = "paste_format_long", required = false)
-        var pastFormatLong: String? = null
-
-        @field:Element(name = "paste_format_short", required = false)
-        var pasteFormatShort: String? = null
-
-        @field:Element(name = "paste_url", required = false)
-        var pasteUrl: String? = null
-
-        @field:Element(name = "paste_hits", required = false)
-        var pasteHits: String? = null
-    }
-
-
-    private suspend fun getPastes(userKey: String): List<Paste> {
-        val text: String = client.post {
-            url {
-                path("api/api_post.php")
-            }
-            setBody(
-                "api_dev_key=${devKey}&api_user_key=${userKey}&api_option=list&api_results_limit=1000"
-            )
-        }.body()
-        val stream = text.byteInputStream()
-        var res: ArrayList<Paste>  = arrayListOf()
-        while (true) {
-            try {
-                val paste = serializer.read(Paste::class.java, stream)
-                res.add(paste)
-            } catch (ex: Exception) {
-                ex.printStackTrace()
-            }
-        }
-        println(res.size)
-        return res
-    }
-
-    private val serializer: Serializer = Persister()
     private suspend fun getPasteMessage(userKey: String, paste: Paste): Message? = try {
-        if (paste.pasteTitle != title) {
+        if (paste.title != title) {
             null
         }
         var resp: String = client.post {
@@ -158,7 +100,7 @@ class Sendbin(
                 path("api/api_raw.php")
             }
             setBody(
-                "api_dev_key=${devKey}&api_user_key=${userKey}&api_paste_key=${paste.pasteKey}"
+                "api_dev_key=${devKey}&api_user_key=${userKey}&api_paste_key=${paste.key}&api_option=show_paste"
             )
         }.body()
         var message = Json.decodeFromString<Message>(resp)
@@ -173,8 +115,42 @@ class Sendbin(
                 path("api/api_post.php")
             }
             setBody(
-                "api_dev_key=${devKey}&api_paste_key=${paste.pasteKey}&api_user_key=${userKey}&api_option=delete"
+                "api_dev_key=${devKey}&api_paste_key=${paste.key}&api_user_key=${userKey}&api_option=delete"
             )
         }
+    }
+
+    @org.simpleframework.xml.Root(name = "root", strict = false)
+    private class Root {
+        @field:ElementList(name = "paste", required = false, inline = true)
+        lateinit var pastes: List<Paste>
+    }
+
+    @org.simpleframework.xml.Root(name = "paste", strict = false)
+    private class Paste {
+        @field:Element(name = "paste_key", required = false)
+        var key: String? = null
+
+        @field:Element(name = "paste_date", required = false)
+        var date: String? = null
+
+        @field:Element(name = "paste_title", required = false)
+        var title: String? = null
+    }
+
+    private val serializer: Serializer = Persister()
+
+    private suspend fun getPastes(userKey: String): List<Paste> {
+        var text: String = client.post {
+            url {
+                path("api/api_post.php")
+            }
+            setBody(
+                "api_dev_key=${devKey}&api_user_key=${userKey}&api_option=list&api_results_limit=1000"
+            )
+        }.body()
+        text = "<root>\n$text\n</root>"
+        var pastes = serializer.read(Root::class.java, text)
+        return pastes.pastes
     }
 }
