@@ -26,7 +26,7 @@ class Listener : CliktCommand(printHelpOnEmptyArgs = true) {
                 println("From: ${message.from}, ${message.payload}")
             },
             {
-                delay(1000)
+                delay(10000)
             },
             { ex ->
                 ex.printStackTrace()
