@@ -1,0 +1,3 @@
+api_dev_key=KwoUVpTV3aMdBzYz-Kqecb2BfzK_gTzq
+api_user_name=Ch0p1k3
+api_user_password=7KfqFKL2nJJY8a2
