@@ -92,28 +92,37 @@ class Sendbin(
     }
 
     @Root(strict = false, name = "Paste")
-    private data class Paste(
+    private class Paste {
         @field:Element(name = "paste_key", required = false)
-        val pasteKey: String?,
+        var pasteKey: String? = null
+
         @field:Element(name = "paste_date", required = false)
-        val pasteDate: String?,
+        var pasteDate: String? = null
+
         @field:Element(name = "paste_title", required = false)
-        val pasteTitle: String?,
+        var pasteTitle: String? = null
+
         @field:Element(name = "paste_size", required = false)
-        val pasteSize: String?,
+        var pasteSize: String? = null
+
         @field:Element(name = "paste_expire_date", required = false)
-        val pasteExpireDate: String?,
+        var pasteExpireDate: String? = null
+
         @field:Element(name = "paste_private", required = false)
-        val pastePrivate: String?,
+        var pastePrivate: String? = null
+
         @field:Element(name = "paste_format_long", required = false)
-        val pastFormatLong: String?,
+        var pastFormatLong: String? = null
+
         @field:Element(name = "paste_format_short", required = false)
-        val pasteFormatShort: String?,
+        var pasteFormatShort: String? = null
+
         @field:Element(name = "paste_url", required = false)
-        val pasteUrl: String?,
+        var pasteUrl: String? = null
+
         @field:Element(name = "paste_hits", required = false)
-        val pasteHits: String?
-    ) {}
+        var pasteHits: String? = null
+    }
 
 
     private suspend fun getPastes(userKey: String): List<Paste> {
@@ -125,9 +134,18 @@ class Sendbin(
                 "api_dev_key=${devKey}&api_user_key=${userKey}&api_option=list&api_results_limit=1000"
             )
         }.body()
-        val paste = serializer.read(Paste::class.java, text)
-        println(paste.pasteTitle)
-        return listOf(paste)
+        val stream = text.byteInputStream()
+        var res: ArrayList<Paste>  = arrayListOf()
+        while (true) {
+            try {
+                val paste = serializer.read(Paste::class.java, stream)
+                res.add(paste)
+            } catch (ex: Exception) {
+                ex.printStackTrace()
+            }
+        }
+        println(res.size)
+        return res
     }
 
     private val serializer: Serializer = Persister()

@@ -29,10 +29,7 @@ class Listener : CliktCommand(printHelpOnEmptyArgs = true) {
                 delay(1000)
             },
             { ex ->
-                run {
-                    ex.printStackTrace()
-                    println(ex.message)
-                }
+                ex.printStackTrace()
             }
         ))
     }
