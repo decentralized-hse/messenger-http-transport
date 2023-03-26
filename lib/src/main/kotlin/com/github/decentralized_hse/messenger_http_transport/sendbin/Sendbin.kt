@@ -62,6 +62,8 @@ class Sendbin(
         userKey: String, callbacks: Callbacks
     ) {
         do try {
+            callbacks.fallback()
+
             val pastes = getPastes(userKey)
 
             for (paste in pastes) {
@@ -69,8 +71,6 @@ class Sendbin(
                 deletePaste(userKey, paste)
                 callbacks.callback(message)
             }
-
-            callbacks.fallback()
         } catch (ex: Exception) {
             callbacks.errors(ex)
         } while (true);
