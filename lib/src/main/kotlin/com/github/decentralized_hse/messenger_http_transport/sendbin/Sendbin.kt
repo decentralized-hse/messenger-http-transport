@@ -5,16 +5,16 @@ import io.ktor.client.call.*
 import io.ktor.client.engine.*
 import io.ktor.client.engine.cio.*
 import io.ktor.client.plugins.*
-import io.ktor.client.plugins.contentnegotiation.*
-import io.ktor.client.plugins.logging.*
 import io.ktor.client.request.*
 import io.ktor.http.*
-import io.ktor.serialization.kotlinx.xml.*
-import kotlinx.coroutines.Job
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.decodeFromString
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
+import org.simpleframework.xml.Element
+import org.simpleframework.xml.Root
+import org.simpleframework.xml.Serializer
+import org.simpleframework.xml.core.Persister
 
 class Sendbin(
     private val devKey: String,
@@ -24,10 +24,6 @@ class Sendbin(
 ) {
     private val client = HttpClient(engine) {
         expectSuccess = true
-        install(Logging) {
-            logger = Logger.DEFAULT
-            level = LogLevel.ALL
-        }
         defaultRequest {
             url {
                 protocol = settings.protocol
@@ -55,35 +51,28 @@ class Sendbin(
         }.body()
     }
 
-    @Serializable
-    private data class Paste(
-        val pasteKey: String,
-        val pasteDate: Long,
-        val pasteTitle: String,
-        val pasteSize: Long,
-        val pasteExpireDate: Long,
-        val pastePrivate: String,
-        val pastFormatLong: String,
-        val pasteFormatShort: String,
-        val pasteUrl: String,
-        val pasteHits: Long
-    ) {}
+    class Callbacks(
+        val callback: suspend (Message) -> Unit,
+        val fallback: suspend () -> Unit = {},
+        val errors: suspend (Exception) -> Unit = {}
+    ) {
+    }
 
     suspend fun listen(
-        userKey: String, callback: suspend (Message) -> Unit, fallback: suspend () -> Unit = {}
-    ): Job {
+        userKey: String, callbacks: Callbacks
+    ) {
         do try {
             val pastes = getPastes(userKey)
 
             for (paste in pastes) {
                 val message = getPasteMessage(userKey, paste) ?: continue
                 deletePaste(userKey, paste)
-                callback(message)
+                callbacks.callback(message)
             }
 
-            fallback()
+            callbacks.fallback()
         } catch (ex: Exception) {
-            println(ex)
+            callbacks.errors(ex)
         } while (true);
     }
 
@@ -102,14 +91,33 @@ class Sendbin(
         }.body()
     }
 
+    @Root(strict = false, name = "Paste")
+    private data class Paste(
+        @field:Element(name = "paste_key", required = false)
+        val pasteKey: String?,
+        @field:Element(name = "paste_date", required = false)
+        val pasteDate: String?,
+        @field:Element(name = "paste_title", required = false)
+        val pasteTitle: String?,
+        @field:Element(name = "paste_size", required = false)
+        val pasteSize: String?,
+        @field:Element(name = "paste_expire_date", required = false)
+        val pasteExpireDate: String?,
+        @field:Element(name = "paste_private", required = false)
+        val pastePrivate: String?,
+        @field:Element(name = "paste_format_long", required = false)
+        val pastFormatLong: String?,
+        @field:Element(name = "paste_format_short", required = false)
+        val pasteFormatShort: String?,
+        @field:Element(name = "paste_url", required = false)
+        val pasteUrl: String?,
+        @field:Element(name = "paste_hits", required = false)
+        val pasteHits: String?
+    ) {}
+
+
     private suspend fun getPastes(userKey: String): List<Paste> {
-        return client.apply {
-            config {
-                install(ContentNegotiation) {
-                    xml()
-                }
-            }
-        }.post {
+        val text: String = client.post {
             url {
                 path("api/api_post.php")
             }
@@ -117,8 +125,12 @@ class Sendbin(
                 "api_dev_key=${devKey}&api_user_key=${userKey}&api_option=list&api_results_limit=1000"
             )
         }.body()
+        val paste = serializer.read(Paste::class.java, text)
+        println(paste.pasteTitle)
+        return listOf(paste)
     }
 
+    private val serializer: Serializer = Persister()
     private suspend fun getPasteMessage(userKey: String, paste: Paste): Message? = try {
         if (paste.pasteTitle != title) {
             null

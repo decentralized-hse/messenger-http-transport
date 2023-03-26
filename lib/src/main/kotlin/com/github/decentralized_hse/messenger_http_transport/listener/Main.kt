@@ -21,12 +21,20 @@ class Listener : CliktCommand(printHelpOnEmptyArgs = true) {
 
     override fun run() = runBlocking {
         val sendbin = Sendbin(devKey)
-        val job = sendbin.listen(userKey, {
-            message -> println("From: ${message.from}, ${message.payload}")
-        }) {
-            delay(500)
-        }
-        job.join()
+        sendbin.listen(userKey, Sendbin.Callbacks(
+            { message ->
+                println("From: ${message.from}, ${message.payload}")
+            },
+            {
+                delay(1000)
+            },
+            { ex ->
+                run {
+                    ex.printStackTrace()
+                    println(ex.message)
+                }
+            }
+        ))
     }
 }
 

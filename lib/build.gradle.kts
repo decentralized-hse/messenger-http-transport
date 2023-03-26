@@ -23,10 +23,11 @@ dependencies {
 
     implementation("com.github.ajalt.clikt:clikt:3.5.2")
 
+    implementation("org.simpleframework:simple-xml:2.7.1")
+
     val ktorVersion = "2.2.4"
     implementation("io.ktor:ktor-client-core:$ktorVersion")
     implementation("io.ktor:ktor-client-cio:$ktorVersion")
-    implementation("io.ktor:ktor-serialization-kotlinx-xml:$ktorVersion")
     implementation("io.ktor:ktor-client-content-negotiation:$ktorVersion")
     implementation("io.ktor:ktor-client-logging:$ktorVersion")
     testImplementation("io.ktor:ktor-client-mock:$ktorVersion")
