@@ -54,11 +54,9 @@ class Sendbin(
         }.body()
     }
 
-//    fun listen(user: UserInfo, ctx: String, callback: (Message)) {
-//        launch {
-//            delay(100l)
-//        }
-//    }
+    fun listen(user: UserInfo, callback: (Message) -> Unit) {
+        TODO("TODO")
+    }
 
     //  Only one key can be active at the same time for the same user. This key does not expire,
     //  unless a new one is generated. We recommend creating just one, then caching that key locally
