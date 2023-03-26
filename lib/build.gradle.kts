@@ -19,7 +19,6 @@ dependencies {
 
     implementation("com.google.guava:guava:31.1-jre")
 
-    implementation("org.jetbrains.kotlinx:kotlinx-serialization-xml:1.5.0")
     implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.5.0")
 
     implementation("com.github.ajalt.clikt:clikt:3.5.2")
