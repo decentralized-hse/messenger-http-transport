@@ -37,16 +37,14 @@ class Sender : CliktCommand(printHelpOnEmptyArgs = true) {
         envvar = "SENDBIN_PAYLOAD"
     ).required()
 
-    override fun run() {
-        runBlocking {
-            val sendbin = Sendbin(devKey, CIO.create())
-            println(
-                sendbin.send(
-                    Sendbin.Message("chopik", "Hello"),
-                    sendbin.getUserKey(UserInfo(login, password))
-                )
+    override fun run() = runBlocking {
+        val sendbin = Sendbin(devKey, CIO.create())
+        println(
+            sendbin.send(
+                Sendbin.Message("chopik", "Hello"),
+                sendbin.getUserKey(UserInfo(login, password))
             )
-        }
+        )
     }
 }
 

@@ -5,9 +5,15 @@ import io.ktor.client.call.*
 import io.ktor.client.engine.*
 import io.ktor.client.engine.cio.*
 import io.ktor.client.plugins.*
+import io.ktor.client.plugins.contentnegotiation.*
 import io.ktor.client.plugins.logging.*
 import io.ktor.client.request.*
 import io.ktor.http.*
+import io.ktor.serialization.kotlinx.xml.*
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.MainScope
+import kotlinx.coroutines.launch
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
@@ -16,7 +22,7 @@ class Sendbin(
     private val devKey: String,
     private val engine: HttpClientEngine = CIO.create(),
     private val settings: PastebinSettings = PastebinSettings()
-) {
+) : CoroutineScope by MainScope() {
     private val client = HttpClient(engine) {
         expectSuccess = true
         install(Logging) {
@@ -30,7 +36,9 @@ class Sendbin(
             }
             contentType(ContentType.Application.FormUrlEncoded)
         }
-
+        install(ContentNegotiation) {
+            xml()
+        }
     }
 
     @Serializable
@@ -54,8 +62,25 @@ class Sendbin(
         }.body()
     }
 
-    fun listen(user: UserInfo, callback: (Message) -> Unit) {
-        TODO("TODO")
+    @Serializable
+    private data class Paste(
+        val pasteKey: String,
+        val pasteDate: Long,
+        val pasteTitle: String,
+        val pasteSize: Long,
+        val pasteExpireDate: Long,
+        val pastePrivate: String,
+        val pastFormatLong: String,
+        val pasteFormatShort: String,
+        val pasteUrl: String,
+        val pasteHits: Long
+    ) {
+    }
+
+    fun listen(userKey: String, callback: (Message) -> Unit): Job {
+        return launch {
+
+        }
     }
 
     //  Only one key can be active at the same time for the same user. This key does not expire,
@@ -70,5 +95,27 @@ class Sendbin(
             }
             setBody("api_dev_key=${devKey}&api_user_name=${user.login}&api_user_password=${user.password}")
         }.body()
+    }
+
+    private suspend fun getPastes(userKey: String): List<Paste> {
+        return client.get {
+            url {
+                path("api/api_post.php")
+            }
+            setBody(
+                "api_dev_key=${devKey}&api_user_key=${userKey}&api_option=list&api_results_limit=1000"
+            )
+        }.body()
+    }
+
+    private suspend fun deletePaste(userKey: String, paste: Paste) {
+        client.post {
+            url {
+                path("api/api_post.php")
+            }
+            setBody(
+                "api_dev_key=${devKey}&api_paste_key=${paste.pasteKey}&api_user_key=${userKey}&api_option=delete"
+            )
+        }
     }
 }
