@@ -6,7 +6,6 @@ import com.github.ajalt.clikt.parameters.options.required
 import com.github.decentralized_hse.messenger_http_transport.sendbin.Sendbin
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.runBlocking
-import kotlin.system.exitProcess
 
 class Listener : CliktCommand(printHelpOnEmptyArgs = true) {
     private val devKey by option(
