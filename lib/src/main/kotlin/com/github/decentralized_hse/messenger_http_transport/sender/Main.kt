@@ -29,7 +29,7 @@ class Sender : CliktCommand(printHelpOnEmptyArgs = true) {
         val sendbin = Sendbin(devKey)
         while (true) {
             val payload = prompt("Message to send") ?: exitProcess(0)
-            println(sendbin.send(Sendbin.Message(from, payload), userKey))
+            println(sendbin.sendMessages(userKey, Sendbin.Message(from, payload)))
         }
     }
 }

@@ -40,7 +40,7 @@ class Sendbin(
         const val title = "[THIS IS TITLE BY SENDBIN PROTOCOL DO NOT TOUCH THIS]"
     }
 
-    suspend fun send(msg: Message, userKey: String): String {
+    suspend fun sendMessages(userKey: String, msg: Message): String {
         return client.post {
             url {
                 path("api/api_post.php")
